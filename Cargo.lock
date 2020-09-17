@@ -77,6 +77,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "client"
+version = "0.1.0"
+dependencies = [
+ "x11",
+]
+
+[[package]]
 name = "env_logger"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -137,9 +144,10 @@ name = "ibswm"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "client",
  "env_logger",
  "log",
- "x11rb",
+ "x11",
 ]
 
 [[package]]
@@ -398,12 +406,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
+name = "x11"
+version = "0.1.0"
+dependencies = [
+ "x11rb",
+]
+
+[[package]]
 name = "x11rb"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8faff720772cdd08846c3db9ea59a3e365b0a16ead341fbb2fe4a029122e5c08"
 dependencies = [
  "gethostname",
+ "libc",
  "nix",
  "winapi",
  "winapi-wsapoll",
