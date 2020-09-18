@@ -1,4 +1,6 @@
 mod window_manager;
+mod desktop;
+mod client;
 
 use std::error::Error;
 use std::process::exit;
