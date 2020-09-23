@@ -19,6 +19,7 @@ use x11rb::{
 
 use crate::connection::Connection;
 use crate::desktop::{Desktop, DesktopMode};
+use x11rb::protocol::xproto::UnmapNotifyEvent;
 
 pub struct WindowManager<'a, C: X11Connection> {
     connection: &'a mut Connection<'a, C>,
@@ -69,13 +70,35 @@ impl<'a, C: X11Connection> WindowManager<'a, C> {
         }
     }
 
-    fn on_map_request(&mut self, _event: MapRequestEvent) -> Result<(), Box<dyn Error>> {
-        println!("{:?}", self);
+    fn on_map_request(&mut self, event: MapRequestEvent) -> Result<(), Box<dyn Error>> {
+        // TODO: Store the window into the binary tree and reconfigure the window to match desktop
+        // TODO: mode.
 
+        // Temporary map the window directly on the root window instead of the desktop window.
+        self.connection.dpy
+            .change_window_attributes(
+                event.window,
+                &ChangeWindowAttributesAux::default()
+                    .event_mask(EventMask::FocusChange)
+        )?;
+
+        self.connection.dpy.reparent_window(event.window, self.connection.screen.root, 0, 0)?;
+        self.connection.dpy.map_window(event.window)?;
+
+        info!("Map window {}.", event.window);
+        Ok(())
+    }
+
+    fn on_unmap_notify(&self, event: UnmapNotifyEvent) -> Result<(), Box<dyn Error>> {
+        // Rebuild the tree.
+
+        info!("Unmap window {}.", event.window);
         Ok(())
     }
 
     fn on_configure_request(&mut self, event: ConfigureRequestEvent) -> Result<(), Box<dyn Error>> {
+        // TODO: Configure a window using element given from the request. We can't configure it
+        // TODO: using the binary tree configuration right here because the window is mapped yet.
         self.connection.dpy
             .configure_window(
                 event.window,
@@ -83,17 +106,14 @@ impl<'a, C: X11Connection> WindowManager<'a, C> {
                     .x(i32::from(event.x))
                     .y(i32::from(event.y))
                     .height(u32::from(event.height))
-                    .width(u32::from(event.width)),
+                    .width(u32::from(event.width))
             )?;
 
-        println!("Configured window {}.", event.window);
-
+        info!("Configured window {}.", event.window);
         Ok(())
     }
 
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
-        println!("{:?}", self);
-
         loop {
             self.connection.dpy.flush()?;
             let mut event = Some(self.connection.dpy.wait_for_event()?);
@@ -102,10 +122,11 @@ impl<'a, C: X11Connection> WindowManager<'a, C> {
                 let handle = match e {
                     Event::MapRequest(e) => self.on_map_request(e),
                     Event::ConfigureRequest(e) => self.on_configure_request(e),
+                    Event::UnmapNotify(e) => self.on_unmap_notify(e),
 
                     // Handle all other cases.
                     _ => {
-                        println!("Event not managed : {:?}.", e);
+                        debug!("Event not managed : {:?}.", e);
                         Ok(())
                     }
                 };

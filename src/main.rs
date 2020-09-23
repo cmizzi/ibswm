@@ -37,9 +37,9 @@ fn init_logger(opts: &Opts) {
     let app = current_exe();
     let env = Env::default().default_filter_or(
         match opts.verbose {
-            0 => format!("{}:error", app),
-            1 => format!("{}:info", app),
-            2 => format!("{}:debug", app),
+            0 => format!("{}=error", app),
+            1 => format!("{}=info", app),
+            2 => format!("{}=debug", app),
             _ => "trace".to_string(),
         }
     );
