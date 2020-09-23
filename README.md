@@ -11,6 +11,10 @@ events. You need a third party program (like `sxhkd`) to communicate
 informations between your action and the window manager, through
 `ibsc` commands.
 
+This project is strongly inspired by [`bspwm`](https://github.com/baskerville/bspwm)
+and tries to improve it. It is also entirely written in [Rust](https://www.rust-lang.org/)
+to enable memory-safety and be able to work with higher performance.
+
 ## Installation
 
 *TODO*
