@@ -1,5 +1,7 @@
 # Improved Binary Space Window Manager
 
+![main workflow](https://github.com/cmizzi/ibswm/workflows/Continuous%20integration/badge.svg)
+
 **WARNING: This application is under development and not stable yet.**
 
 `ibswm` is a tiling window manager that represents windows as
