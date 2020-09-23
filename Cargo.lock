@@ -133,6 +133,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibsc"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "env_logger",
+ "log",
+]
+
+[[package]]
 name = "ibswm"
 version = "0.1.0"
 dependencies = [
