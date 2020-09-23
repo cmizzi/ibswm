@@ -1,8 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Formatter};
 
-use x11::connection::Connection;
-use x11::x11rb::{
+use x11rb::{
     connection::Connection as X11Connection,
     errors::{
         ReplyError,
@@ -18,6 +17,7 @@ use x11::x11rb::{
     protocol::xproto::MapRequestEvent,
 };
 
+use crate::connection::Connection;
 use crate::desktop::{Desktop, DesktopMode};
 
 pub struct WindowManager<'a, C: X11Connection> {
@@ -107,7 +107,7 @@ impl<'a, C: X11Connection> WindowManager<'a, C> {
                     _ => {
                         println!("Event not managed : {:?}.", e);
                         Ok(())
-                    },
+                    }
                 };
 
                 if let Err(error) = handle {

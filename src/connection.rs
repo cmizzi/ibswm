@@ -23,6 +23,7 @@ impl<'a, C: Conn> Connection<'a, C> {
             atoms: HashMap::new(),
         };
 
+        // Setting up basic ICCCM states.
         c.dpy
             .change_property32(
                 PropMode::Replace,
@@ -38,24 +39,27 @@ impl<'a, C: Conn> Connection<'a, C> {
             )
             .expect("Cannot add _NET_SUPPORTED property atom.");
 
+        debug!("Applying ICCCM support on main root.");
+
+        // Force applying change right now.
         c.dpy.flush().unwrap();
         c
     }
 
     pub fn atom<'b>(&mut self, name: &'b [u8]) -> Result<Atom, Box<dyn Error>> {
         let name_string = str::from_utf8(name)?.to_string();
+        let dpy = self.dpy;
 
         let atom = self.atoms.entry(name_string)
-            .or_insert(
-                self.dpy
-                    .intern_atom(false, name)
-                    .map(|cookie| {
-                        cookie
-                            .reply()
-                            .map(|reply| reply.atom)
-                            .unwrap()
-                    })
-                    .unwrap()
+            .or_insert_with(|| dpy
+                .intern_atom(false, name)
+                .map(|cookie| {
+                    cookie
+                        .reply()
+                        .map(|reply| reply.atom)
+                        .unwrap()
+                })
+                .unwrap()
             );
 
         Ok(*atom)

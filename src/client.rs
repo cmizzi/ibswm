@@ -1,4 +1,4 @@
-use x11::x11rb::protocol::xproto::Window;
+use x11rb::protocol::xproto::Window;
 
 pub struct Client<'a> {
     pub next: Option<&'a Client<'a>>,
