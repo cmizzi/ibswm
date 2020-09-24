@@ -115,6 +115,7 @@ impl<'a> WindowManager<'a> {
         Ok(())
     }
 
+    /// Handle an X11 event.
     pub fn handle_event(&mut self, event: Event) -> Result<(), Box<dyn Error>> {
         let handle = match event {
             Event::MapRequest(e) => self.on_map_request(e),
@@ -135,18 +136,22 @@ impl<'a> WindowManager<'a> {
         Ok(())
     }
 
+    /// Handle a user command through `ibsc`.
     pub fn handle_command(&mut self, command: String) {
         info!("Applying command \"{}\".", command);
     }
 
+    /// Poll an event from X11 server.
     pub fn poll_for_event(&self) -> Result<Option<Event>, ConnectionError> {
         self.connection.dpy.poll_for_event()
     }
 
+    /// Send pending requests to X11 server.
     pub fn flush(&self) -> Result<(), ConnectionError> {
         self.connection.dpy.flush()
     }
 
+    /// Retrieve the connection raw file descriptor.
     pub fn connection_fd(&self) -> RawFd {
         self.connection.dpy.as_raw_fd()
     }
