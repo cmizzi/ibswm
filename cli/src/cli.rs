@@ -48,14 +48,14 @@ pub struct Config {
 #[derive(Clap, Debug)]
 pub struct Monitor {
     /// Monitor name.
-    #[clap(short, long)]
-    pub monitor: Option<String>,
+    pub monitor: String,
 
     /// Custom monitor name.
     #[clap(short, long)]
     pub name: Option<String>,
 
     /// List of desktops to create.
+    #[clap(short, long)]
     pub desktops: Vec<String>,
 }
 

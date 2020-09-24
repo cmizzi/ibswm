@@ -23,12 +23,13 @@ use x11rb::protocol::xproto::UnmapNotifyEvent;
 use clap::Clap;
 
 use crate::connection::Connection;
-use crate::desktop::{Desktop, DesktopMode};
 use ibsc::cli::Opts;
+use crate::monitors::{Monitor, Monitors};
+use crate::command_executor::CommandExecutor;
 
 pub struct WindowManager<'a> {
     connection: &'a mut Connection<'a>,
-    desktops: Vec<Desktop<'a>>,
+    pub monitors: Monitors,
 }
 
 impl<'a> WindowManager<'a> {
@@ -36,14 +37,10 @@ impl<'a> WindowManager<'a> {
     pub fn new(connection: &'a mut Connection<'a>) -> Result<WindowManager<'a>, ReplyOrIdError> {
         let mut wm = Self {
             connection,
-            desktops: Vec::new(),
+            monitors: Monitors::new(),
         };
 
-        for _ in 0..4 {
-            wm.desktops.push(
-                Desktop::new(DesktopMode::Tile)
-            );
-        }
+        wm.monitors.add_monitor(Monitor::new("default".to_string()));
 
         Ok(wm)
     }
@@ -151,7 +148,16 @@ impl<'a> WindowManager<'a> {
             return Err(msg.into());
         }
 
-        debug!("Execute command : \"{}\" : {:?}", command, opts.unwrap());
+        let opts = opts.unwrap();
+        let mut executor = CommandExecutor::new(self, &opts.command);
+
+        if let Err(error) = executor.execute() {
+            let msg = format!("{}", error);
+
+            error!("Error while executing command: {}", msg);
+            socket.write_all(msg.as_bytes())?;
+        }
+
         Ok(())
     }
 

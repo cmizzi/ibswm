@@ -18,8 +18,9 @@ use crate::window_manager::WindowManager;
 
 mod window_manager;
 mod desktop;
-mod client;
 mod connection;
+mod monitors;
+mod command_executor;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.0", author = "Cyril Mizzi <me@p1ngouin.com>")]

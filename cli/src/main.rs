@@ -5,11 +5,13 @@ use std::env;
 use std::error::Error;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
+use std::io::prelude::*;
 
 use clap::Clap;
 use env_logger::Env;
 
 use crate::cli::Opts;
+use std::time::Duration;
 
 mod cli;
 
@@ -51,7 +53,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let args: Vec<String> = env::args().collect();
+
     stream.write_all(args.join(" ").as_bytes())?;
+
+    // TODO: Wait for a reply.
 
     Ok(())
 }
