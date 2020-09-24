@@ -9,9 +9,9 @@ use std::os::unix::net::UnixStream;
 use clap::Clap;
 use env_logger::Env;
 
-use crate::lib::Opts;
+use crate::cli::Opts;
 
-mod lib;
+mod cli;
 
 fn current_exe() -> String {
     std::env::current_exe()

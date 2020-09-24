@@ -24,7 +24,7 @@ use clap::Clap;
 
 use crate::connection::Connection;
 use crate::desktop::{Desktop, DesktopMode};
-use crate::cli::lib::Opts;
+use ibsc::cli::Opts;
 
 pub struct WindowManager<'a> {
     connection: &'a mut Connection<'a>,

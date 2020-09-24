@@ -1,3 +1,6 @@
+/// This part of the program is shared between `ibsc` and `ibswm` to easily manage command. If you
+/// modify this part, please also check the `ibswm` package.
+
 use clap::Clap;
 
 #[derive(Clap, Debug)]

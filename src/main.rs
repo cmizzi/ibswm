@@ -20,7 +20,6 @@ mod window_manager;
 mod desktop;
 mod client;
 mod connection;
-mod cli;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.0", author = "Cyril Mizzi <me@p1ngouin.com>")]
