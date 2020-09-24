@@ -8,18 +8,19 @@ use x11rb::connection::Connection as Conn;
 use x11rb::protocol::xproto::*;
 #[allow(unused_imports)]
 use x11rb::wrapper::ConnectionExt as _;
+use x11rb::xcb_ffi::XCBConnection;
 
-pub struct Connection<'a, C: Conn> {
-    pub dpy: &'a C,
+pub struct Connection<'a> {
+    pub dpy: &'a XCBConnection,
     pub screen: Screen,
     atoms: HashMap<String, Atom>,
 }
 
-impl<'a, C: Conn> Connection<'a, C> {
-    pub fn new(connection: &'a C, screen_key: usize) -> Self {
+impl<'a> Connection<'a> {
+    pub fn new(connection: &'a XCBConnection, screen_num: usize) -> Self {
         let mut c = Self {
             dpy: connection,
-            screen: connection.setup().roots[screen_key].clone(),
+            screen: connection.setup().roots[screen_num].clone(),
             atoms: HashMap::new(),
         };
 

@@ -34,7 +34,7 @@ struct Config {
     monitor: Option<String>,
 
     /// Apply configuration on a specific monitor.
-    key: Option<String>,
+    key: String,
 
     /// Apply configuration on a specific monitor.
     value: Option<String>,
@@ -72,9 +72,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let opts: Opts = Opts::parse();
 
     match opts.command {
-        SubCommand::Config(_) => println!("Configure."),
-        SubCommand::Monitor(_) => println!("Monitor."),
-        SubCommand::Rule(_) => println!("Rule."),
+        SubCommand::Config(config) => println!("{:?}", config),
+        SubCommand::Monitor(monitor) => println!("{:?}", monitor),
+        SubCommand::Rule(rule) => println!("{:?}", rule),
     }
 
     Ok(())

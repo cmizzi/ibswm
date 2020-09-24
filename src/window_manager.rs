@@ -16,20 +16,22 @@ use x11rb::{
     protocol::xproto::EventMask,
     protocol::xproto::MapRequestEvent,
 };
+use x11rb::protocol::xproto::UnmapNotifyEvent;
 
 use crate::connection::Connection;
 use crate::desktop::{Desktop, DesktopMode};
-use x11rb::protocol::xproto::UnmapNotifyEvent;
+use x11rb::errors::ConnectionError;
+use std::os::unix::io::{AsRawFd, RawFd};
 
-pub struct WindowManager<'a, C: X11Connection> {
-    connection: &'a mut Connection<'a, C>,
+pub struct WindowManager<'a> {
+    connection: &'a mut Connection<'a>,
     desktops: Vec<Desktop<'a>>,
     active_desktop: usize,
 }
 
-impl<'a, C: X11Connection> WindowManager<'a, C> {
+impl<'a> WindowManager<'a> {
     /// Create a new WindowManager instance.
-    pub fn new(connection: &'a mut Connection<'a, C>) -> Result<WindowManager<'a, C>, ReplyOrIdError> {
+    pub fn new(connection: &'a mut Connection<'a>) -> Result<WindowManager<'a>, ReplyOrIdError> {
         let mut wm = Self {
             connection,
             desktops: Vec::new(),
@@ -79,8 +81,8 @@ impl<'a, C: X11Connection> WindowManager<'a, C> {
             .change_window_attributes(
                 event.window,
                 &ChangeWindowAttributesAux::default()
-                    .event_mask(EventMask::FocusChange)
-        )?;
+                    .event_mask(EventMask::FocusChange),
+            )?;
 
         self.connection.dpy.reparent_window(event.window, self.connection.screen.root, 0, 0)?;
         self.connection.dpy.map_window(event.window)?;
@@ -106,42 +108,51 @@ impl<'a, C: X11Connection> WindowManager<'a, C> {
                     .x(i32::from(event.x))
                     .y(i32::from(event.y))
                     .height(u32::from(event.height))
-                    .width(u32::from(event.width))
+                    .width(u32::from(event.width)),
             )?;
 
         info!("Configured window {}.", event.window);
         Ok(())
     }
 
-    pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
-        loop {
-            self.connection.dpy.flush()?;
-            let mut event = Some(self.connection.dpy.wait_for_event()?);
+    pub fn handle_event(&mut self, event: Event) -> Result<(), Box<dyn Error>> {
+        let handle = match event {
+            Event::MapRequest(e) => self.on_map_request(e),
+            Event::ConfigureRequest(e) => self.on_configure_request(e),
+            Event::UnmapNotify(e) => self.on_unmap_notify(e),
 
-            while let Some(e) = event {
-                let handle = match e {
-                    Event::MapRequest(e) => self.on_map_request(e),
-                    Event::ConfigureRequest(e) => self.on_configure_request(e),
-                    Event::UnmapNotify(e) => self.on_unmap_notify(e),
-
-                    // Handle all other cases.
-                    _ => {
-                        debug!("Event not managed : {:?}.", e);
-                        Ok(())
-                    }
-                };
-
-                if let Err(error) = handle {
-                    println!("An error occured for event {:?}: {:?}", e, error);
-                }
-
-                event = self.connection.dpy.poll_for_event()?;
+            // Handle all other cases.
+            _ => {
+                debug!("Event not managed : {:?}.", event);
+                Ok(())
             }
+        };
+
+        if let Err(error) = handle {
+            println!("An error occurred for event {:?}: {:?}", event, error);
         }
+
+        Ok(())
+    }
+
+    pub fn handle_command(&mut self, command: String) {
+        info!("Applying command \"{}\".", command);
+    }
+
+    pub fn poll_for_event(&self) -> Result<Option<Event>, ConnectionError> {
+        self.connection.dpy.poll_for_event()
+    }
+
+    pub fn flush(&self) -> Result<(), ConnectionError> {
+        self.connection.dpy.flush()
+    }
+
+    pub fn connection_fd(&self) -> RawFd {
+        self.connection.dpy.as_raw_fd()
     }
 }
 
-impl<'a, C: X11Connection> Debug for WindowManager<'a, C> {
+impl<'a> Debug for WindowManager<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for (i, desktop) in self.desktops.iter().enumerate() {
             let mut clients_count = 0;

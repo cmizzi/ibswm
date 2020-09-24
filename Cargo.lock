@@ -148,6 +148,7 @@ dependencies = [
  "clap",
  "env_logger",
  "log",
+ "nix 0.18.0",
  "x11rb",
 ]
 
@@ -199,6 +200,18 @@ dependencies = [
  "cfg-if",
  "libc",
  "void",
+]
+
+[[package]]
+name = "nix"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83450fe6a6142ddd95fb064b746083fc4ef1705fe81f64a64e1d4b39f54a1055"
+dependencies = [
+ "bitflags",
+ "cc",
+ "cfg-if",
+ "libc",
 ]
 
 [[package]]
@@ -414,7 +427,7 @@ checksum = "8faff720772cdd08846c3db9ea59a3e365b0a16ead341fbb2fe4a029122e5c08"
 dependencies = [
  "gethostname",
  "libc",
- "nix",
+ "nix 0.17.0",
  "winapi",
  "winapi-wsapoll",
 ]
