@@ -15,6 +15,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --all
 
   test:
     name: Test suite
@@ -29,6 +30,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all
 
   clippy:
     name: Clippy
@@ -44,4 +46,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --all -- -D warnings
