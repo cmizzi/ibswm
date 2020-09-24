@@ -1,19 +1,21 @@
 use clap::Clap;
-use std::error::Error;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.0", author = "Cyril Mizzi <me@p1ngouin.com>")]
-struct Opts {
+pub struct Opts {
     /// Verbosity. By default, will only log ERROR level.
     #[clap(short, long, parse(from_occurrences))]
-    verbose: i32,
+    pub verbose: i32,
+
+    #[clap(short, long, default_value = "/tmp/ibswm.sock")]
+    pub socket: String,
 
     #[clap(subcommand)]
-    command: SubCommand
+    pub command: SubCommand
 }
 
 #[derive(Clap, Debug)]
-enum SubCommand {
+pub enum SubCommand {
     /// Configure a monitor.
     #[clap(version = "1.0", author = "Cyril Mizzi <me@p1ngouin.com>")]
     Config(Config),
@@ -28,54 +30,42 @@ enum SubCommand {
 }
 
 #[derive(Clap, Debug)]
-struct Config {
+pub struct Config {
     /// Apply configuration on a specific monitor.
     #[clap(short, long)]
-    monitor: Option<String>,
+    pub monitor: Option<String>,
 
     /// Apply configuration on a specific monitor.
-    key: String,
+    pub key: String,
 
     /// Apply configuration on a specific monitor.
-    value: Option<String>,
+    pub value: Option<String>,
 }
 
 #[derive(Clap, Debug)]
-struct Monitor {
+pub struct Monitor {
     /// Monitor name.
     #[clap(short, long)]
-    monitor: Option<String>,
+    pub monitor: Option<String>,
 
     /// Custom monitor name.
     #[clap(short, long)]
-    name: Option<String>,
+    pub name: Option<String>,
 
     /// List of desktops to create.
-    desktops: Vec<String>,
+    pub desktops: Vec<String>,
 }
 
 #[derive(Clap, Debug)]
-struct Rule {
+pub struct Rule {
     /// Default states to define on new application matching the <application> name.
     #[clap(short, long)]
-    state: Option<Vec<String>>,
+    pub state: Option<Vec<String>>,
 
     /// Default desktop to map new application matching the <application> name.
     #[clap(short, long)]
-    desktop: Option<String>,
+    pub desktop: Option<String>,
 
     /// Application X11 name.
-    application: String,
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let opts: Opts = Opts::parse();
-
-    match opts.command {
-        SubCommand::Config(config) => println!("{:?}", config),
-        SubCommand::Monitor(monitor) => println!("{:?}", monitor),
-        SubCommand::Rule(rule) => println!("{:?}", rule),
-    }
-
-    Ok(())
+    pub application: String,
 }

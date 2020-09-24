@@ -3,7 +3,7 @@ extern crate log;
 
 use std::error::Error;
 use std::io::prelude::*;
-use std::io::{Write, BufReader};
+use std::io::Write;
 use std::os::unix::net::UnixListener;
 use std::os::unix::io::AsRawFd;
 use std::process::exit;
@@ -20,6 +20,7 @@ mod window_manager;
 mod desktop;
 mod client;
 mod connection;
+mod cli;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.0", author = "Cyril Mizzi <me@p1ngouin.com>")]
@@ -110,11 +111,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // Iterate over clients. This method will not block because we called
                 // `set_nonblocking` method on the socket. But, this method will block until the
                 // client disconnects.
-                if let Ok((stream, _)) = stream.accept() {
-                    let stream = BufReader::new(stream);
+                if let Ok((ref mut socket, _)) = stream.accept() {
+                    let mut response = String::new();
+                    socket.read_to_string(&mut response)?;
 
-                    for line in stream.lines() {
-                        wm.handle_command(line.unwrap());
+                    for line in response.lines() {
+                        wm.handle_command(socket, line.to_string()).ok();
                     }
                 }
             }

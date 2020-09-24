@@ -1,5 +1,7 @@
 use std::error::Error;
-use std::fmt::{Debug, Formatter};
+use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::unix::net::UnixStream;
+use std::io::prelude::*;
 
 use x11rb::{
     connection::Connection as X11Connection,
@@ -16,17 +18,17 @@ use x11rb::{
     protocol::xproto::EventMask,
     protocol::xproto::MapRequestEvent,
 };
+use x11rb::errors::ConnectionError;
 use x11rb::protocol::xproto::UnmapNotifyEvent;
+use clap::Clap;
 
 use crate::connection::Connection;
 use crate::desktop::{Desktop, DesktopMode};
-use x11rb::errors::ConnectionError;
-use std::os::unix::io::{AsRawFd, RawFd};
+use crate::cli::lib::Opts;
 
 pub struct WindowManager<'a> {
     connection: &'a mut Connection<'a>,
     desktops: Vec<Desktop<'a>>,
-    active_desktop: usize,
 }
 
 impl<'a> WindowManager<'a> {
@@ -35,7 +37,6 @@ impl<'a> WindowManager<'a> {
         let mut wm = Self {
             connection,
             desktops: Vec::new(),
-            active_desktop: 0,
         };
 
         for _ in 0..4 {
@@ -137,8 +138,21 @@ impl<'a> WindowManager<'a> {
     }
 
     /// Handle a user command through `ibsc`.
-    pub fn handle_command(&mut self, command: String) {
-        info!("Applying command \"{}\".", command);
+    pub fn handle_command(&mut self, socket: &mut UnixStream, command: String) -> Result<(), Box<dyn Error>> {
+        let opts = Opts::try_parse_from(command.split_whitespace());
+
+        // We cannot parse the command. Send a response to the CLI and log error.
+        if let Err(ref error) = opts {
+            let msg = format!("{}", error);
+
+            socket.write_all(msg.as_bytes())?;
+            error!("Error while parsing command \"{}\".", command);
+
+            return Err(msg.into());
+        }
+
+        debug!("Execute command : \"{}\" : {:?}", command, opts.unwrap());
+        Ok(())
     }
 
     /// Poll an event from X11 server.
@@ -154,26 +168,5 @@ impl<'a> WindowManager<'a> {
     /// Retrieve the connection raw file descriptor.
     pub fn connection_fd(&self) -> RawFd {
         self.connection.dpy.as_raw_fd()
-    }
-}
-
-impl<'a> Debug for WindowManager<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for (i, desktop) in self.desktops.iter().enumerate() {
-            let mut clients_count = 0;
-            let mut client = desktop.head;
-
-            while let Some(c) = client {
-                clients_count += 1;
-                client = match &c.next {
-                    Some(c) => Some(&*c),
-                    None => None,
-                };
-            }
-
-            writeln!(f, "{}:{}:{:?}:{}", i, clients_count, desktop.mode, self.active_desktop == i)?;
-        }
-
-        Ok(())
     }
 }
