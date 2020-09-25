@@ -1,6 +1,5 @@
 /// This part of the program is shared between `ibsc` and `ibswm` to easily manage command. If you
 /// modify this part, please also check the `ibswm` package.
-
 use clap::Clap;
 
 #[derive(Clap, Debug)]
@@ -14,7 +13,7 @@ pub struct Opts {
     pub socket: String,
 
     #[clap(subcommand)]
-    pub command: SubCommand
+    pub command: SubCommand,
 }
 
 #[derive(Clap, Debug)]

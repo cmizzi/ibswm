@@ -20,9 +20,7 @@ impl Monitor {
 
     /// Add a new desktop.
     pub fn add_desktop(&mut self, mode: DesktopMode) {
-        self.desktops.push(
-            Desktop::new(mode)
-        );
+        self.desktops.push(Desktop::new(mode));
     }
 
     /// Alias a monitor.
@@ -48,7 +46,9 @@ impl Monitors {
     /// Find a monitor by name or alias.
     pub fn find_by_name(&mut self, name: &str) -> Option<&mut Monitor> {
         for monitor in self.0.iter_mut() {
-            if monitor.name == name || (monitor.alias.is_some() && monitor.alias.as_ref().unwrap() == name) {
+            if monitor.name == name
+                || (monitor.alias.is_some() && monitor.alias.as_ref().unwrap() == name)
+            {
                 return Some(monitor);
             }
         }
@@ -59,7 +59,7 @@ impl Monitors {
 
 #[cfg(test)]
 mod test {
-    use crate::monitors::{Monitors, Monitor};
+    use crate::monitors::{Monitor, Monitors};
     use std::borrow::BorrowMut;
 
     #[test]

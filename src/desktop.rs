@@ -9,8 +9,6 @@ pub struct Desktop {
 
 impl Desktop {
     pub fn new(mode: DesktopMode) -> Self {
-        Self {
-            mode
-        }
+        Self { mode }
     }
 }

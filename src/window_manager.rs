@@ -1,31 +1,28 @@
 use std::error::Error;
+use std::io::prelude::*;
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::os::unix::net::UnixStream;
-use std::io::prelude::*;
 
+use clap::Clap;
+use x11rb::errors::ConnectionError;
+use x11rb::protocol::xproto::UnmapNotifyEvent;
 use x11rb::{
     connection::Connection as X11Connection,
-    errors::{
-        ReplyError,
-        ReplyOrIdError,
-    },
-    protocol::Event,
-    protocol::xproto::ACCESS_ERROR,
+    errors::{ReplyError, ReplyOrIdError},
     protocol::xproto::ChangeWindowAttributesAux,
     protocol::xproto::ConfigureRequestEvent,
     protocol::xproto::ConfigureWindowAux,
     protocol::xproto::ConnectionExt,
     protocol::xproto::EventMask,
     protocol::xproto::MapRequestEvent,
+    protocol::xproto::ACCESS_ERROR,
+    protocol::Event,
 };
-use x11rb::errors::ConnectionError;
-use x11rb::protocol::xproto::UnmapNotifyEvent;
-use clap::Clap;
 
-use crate::connection::Connection;
-use ibsc::cli::Opts;
-use crate::monitors::{Monitor, Monitors};
 use crate::command_executor::CommandExecutor;
+use crate::connection::Connection;
+use crate::monitors::{Monitor, Monitors};
+use ibsc::cli::Opts;
 
 pub struct WindowManager<'a> {
     connection: &'a mut Connection<'a>,
@@ -52,21 +49,22 @@ impl<'a> WindowManager<'a> {
             .event_mask(EventMask::SubstructureRedirect | EventMask::SubstructureNotify);
 
         // Try to take control over the root window.
-        match self.connection.dpy.change_window_attributes(self.connection.screen.root, &change)?.check() {
+        match self
+            .connection
+            .dpy
+            .change_window_attributes(self.connection.screen.root, &change)?
+            .check()
+        {
             // Another WM is running.
             Err(ReplyError::X11Error(error)) if error.error_code() == ACCESS_ERROR => {
                 Err("It seems another WM is already running.".into())
             }
 
             // An error occurred while trying to update attributes.
-            Err(error) => {
-                Err(format!("Error: {:?}", error).into())
-            }
+            Err(error) => Err(format!("Error: {:?}", error).into()),
 
             // All's good, we're good to go!
-            Ok(_) => {
-                Ok(())
-            }
+            Ok(_) => Ok(()),
         }
     }
 
@@ -75,14 +73,14 @@ impl<'a> WindowManager<'a> {
         // TODO: mode.
 
         // Temporary map the window directly on the root window instead of the desktop window.
-        self.connection.dpy
-            .change_window_attributes(
-                event.window,
-                &ChangeWindowAttributesAux::default()
-                    .event_mask(EventMask::FocusChange),
-            )?;
+        self.connection.dpy.change_window_attributes(
+            event.window,
+            &ChangeWindowAttributesAux::default().event_mask(EventMask::FocusChange),
+        )?;
 
-        self.connection.dpy.reparent_window(event.window, self.connection.screen.root, 0, 0)?;
+        self.connection
+            .dpy
+            .reparent_window(event.window, self.connection.screen.root, 0, 0)?;
         self.connection.dpy.map_window(event.window)?;
 
         info!("Map window {}.", event.window);
@@ -99,15 +97,14 @@ impl<'a> WindowManager<'a> {
     fn on_configure_request(&mut self, event: ConfigureRequestEvent) -> Result<(), Box<dyn Error>> {
         // TODO: Configure a window using element given from the request. We can't configure it
         // TODO: using the binary tree configuration right here because the window is mapped yet.
-        self.connection.dpy
-            .configure_window(
-                event.window,
-                &ConfigureWindowAux::default()
-                    .x(i32::from(event.x))
-                    .y(i32::from(event.y))
-                    .height(u32::from(event.height))
-                    .width(u32::from(event.width)),
-            )?;
+        self.connection.dpy.configure_window(
+            event.window,
+            &ConfigureWindowAux::default()
+                .x(i32::from(event.x))
+                .y(i32::from(event.y))
+                .height(u32::from(event.height))
+                .width(u32::from(event.width)),
+        )?;
 
         info!("Configured window {}.", event.window);
         Ok(())
@@ -135,7 +132,11 @@ impl<'a> WindowManager<'a> {
     }
 
     /// Handle a user command through `ibsc`.
-    pub fn handle_command(&mut self, socket: &mut UnixStream, command: String) -> Result<(), Box<dyn Error>> {
+    pub fn handle_command(
+        &mut self,
+        socket: &mut UnixStream,
+        command: String,
+    ) -> Result<(), Box<dyn Error>> {
         let opts = Opts::try_parse_from(command.split_whitespace());
 
         // We cannot parse the command. Send a response to the CLI and log error.

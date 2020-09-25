@@ -4,23 +4,23 @@ extern crate log;
 use std::error::Error;
 use std::io::prelude::*;
 use std::io::Write;
-use std::os::unix::net::UnixListener;
 use std::os::unix::io::AsRawFd;
+use std::os::unix::net::UnixListener;
 use std::process::exit;
 
 use clap::Clap;
 use env_logger::Env;
-use nix::sys::select::{FdSet, select};
+use nix::sys::select::{select, FdSet};
 use x11rb::xcb_ffi::XCBConnection;
 
 use crate::connection::Connection;
 use crate::window_manager::WindowManager;
 
-mod window_manager;
-mod desktop;
-mod connection;
-mod monitors;
 mod command_executor;
+mod connection;
+mod desktop;
+mod monitors;
+mod window_manager;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.0", author = "Cyril Mizzi <me@p1ngouin.com>")]
@@ -35,28 +35,35 @@ struct Opts {
 
 fn current_exe() -> String {
     std::env::current_exe()
-        .ok().unwrap()
-        .file_name().unwrap()
-        .to_str().unwrap()
+        .ok()
+        .unwrap()
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
         .to_owned()
 }
 
 /// Initialize the logger.
 fn init_logger(opts: &Opts) {
     let app = current_exe();
-    let env = Env::default().default_filter_or(
-        match opts.verbose {
-            0 => format!("{}=error", app),
-            1 => format!("{}=info", app),
-            2 => format!("{}=debug", app),
-            _ => "trace".to_string(),
-        }
-    );
+    let env = Env::default().default_filter_or(match opts.verbose {
+        0 => format!("{}=error", app),
+        1 => format!("{}=info", app),
+        2 => format!("{}=debug", app),
+        _ => "trace".to_string(),
+    });
 
     env_logger::from_env(env)
         .format(|buf, record| {
             let level_style = buf.default_level_style(record.level());
-            writeln!(buf, "[{} {:>5}]: {}", buf.timestamp(), level_style.value(record.level()), record.args())
+            writeln!(
+                buf,
+                "[{} {:>5}]: {}",
+                buf.timestamp(),
+                level_style.value(record.level()),
+                record.args()
+            )
         })
         .init();
 }
@@ -66,8 +73,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     init_logger(&opts);
 
     // Create the main connection to X11 though the selected driver through XCB.
-    let (connection, screen_num) = XCBConnection::connect(None)
-        .expect("Unable to connect to X11 server.");
+    let (connection, screen_num) =
+        XCBConnection::connect(None).expect("Unable to connect to X11 server.");
 
     let mut connection = Connection::new(&connection, screen_num);
     let mut wm = WindowManager::new(&mut connection)?;
@@ -88,7 +95,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     std::fs::remove_file(&opts.socket).ok();
 
     let stream = UnixListener::bind(&opts.socket)?;
-    stream.set_nonblocking(true).expect("Couldn't set non-blocking socket mode.");
+    stream
+        .set_nonblocking(true)
+        .expect("Couldn't set non-blocking socket mode.");
 
     loop {
         wm.flush()?;
@@ -103,7 +112,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         //
         // As this statement is blocking, we can safely wait. Also, this method will mutate
         // descriptors to only contains ready file descriptors.
-        if select(descriptors.highest().unwrap() + 1, &mut descriptors, None, None, None)? > 0 {
+        if select(
+            descriptors.highest().unwrap() + 1,
+            &mut descriptors,
+            None,
+            None,
+            None,
+        )? > 0
+        {
             // Applied only when the CLI communicates.
             if descriptors.contains(stream.as_raw_fd()) {
                 debug!("Reading command socket.");

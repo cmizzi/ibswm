@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::str;
 
+use x11rb::connection::Connection as Conn;
 #[allow(unused_imports)]
 use x11rb::connection::{Connection as _, RequestConnection as _};
-use x11rb::connection::Connection as Conn;
 use x11rb::protocol::xproto::*;
 #[allow(unused_imports)]
 use x11rb::wrapper::ConnectionExt as _;
@@ -51,17 +51,11 @@ impl<'a> Connection<'a> {
         let name_string = str::from_utf8(name)?.to_string();
         let dpy = self.dpy;
 
-        let atom = self.atoms.entry(name_string)
-            .or_insert_with(|| dpy
-                .intern_atom(false, name)
-                .map(|cookie| {
-                    cookie
-                        .reply()
-                        .map(|reply| reply.atom)
-                        .unwrap()
-                })
+        let atom = self.atoms.entry(name_string).or_insert_with(|| {
+            dpy.intern_atom(false, name)
+                .map(|cookie| cookie.reply().map(|reply| reply.atom).unwrap())
                 .unwrap()
-            );
+        });
 
         Ok(*atom)
     }

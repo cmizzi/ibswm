@@ -5,40 +5,45 @@ use std::env;
 use std::error::Error;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
-use std::io::prelude::*;
 
 use clap::Clap;
 use env_logger::Env;
 
 use crate::cli::Opts;
-use std::time::Duration;
 
 mod cli;
 
 fn current_exe() -> String {
     std::env::current_exe()
-        .ok().unwrap()
-        .file_name().unwrap()
-        .to_str().unwrap()
+        .ok()
+        .unwrap()
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
         .to_owned()
 }
 
 /// Initialize the logger.
 fn init_logger(opts: &Opts) {
     let app = current_exe();
-    let env = Env::default().default_filter_or(
-        match opts.verbose {
-            0 => format!("{}=error", app),
-            1 => format!("{}=info", app),
-            2 => format!("{}=debug", app),
-            _ => "trace".to_string(),
-        }
-    );
+    let env = Env::default().default_filter_or(match opts.verbose {
+        0 => format!("{}=error", app),
+        1 => format!("{}=info", app),
+        2 => format!("{}=debug", app),
+        _ => "trace".to_string(),
+    });
 
     env_logger::from_env(env)
         .format(|buf, record| {
             let level_style = buf.default_level_style(record.level());
-            writeln!(buf, "[{} {:>5}]: {}", buf.timestamp(), level_style.value(record.level()), record.args())
+            writeln!(
+                buf,
+                "[{} {:>5}]: {}",
+                buf.timestamp(),
+                level_style.value(record.level()),
+                record.args()
+            )
         })
         .init();
 }
